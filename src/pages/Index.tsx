@@ -296,7 +296,7 @@ const Index = () => {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Icon name="Terminal" className="text-[#00ff00] text-glow" size={32} />
-            <h1 className="text-3xl font-bold text-glow">HOSTING CONTROL TERMINAL</h1>
+            <h1 className="text-3xl font-bold text-gray-800">HOSTING CONTROL TERMINAL</h1>
           </div>
           
           <div className="flex flex-wrap gap-2 mb-4">
@@ -352,7 +352,7 @@ const Index = () => {
         <Card className="bg-[#0f0f0f] border-[#00ff00] border-opacity-50 border-glow min-h-[500px] flex flex-col">
           <div
             ref={terminalRef}
-            className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4"
+            className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4 rounded-0 bg-transparent"
             onClick={() => inputRef.current?.focus()}
           >
             {history.map((entry, idx) => (
