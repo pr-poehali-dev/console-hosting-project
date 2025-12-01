@@ -352,7 +352,7 @@ const Index = () => {
         <Card className="bg-[#0f0f0f] border-[#00ff00] border-opacity-50 border-glow min-h-[500px] flex flex-col">
           <div
             ref={terminalRef}
-            className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4 rounded-0 bg-transparent"
+            className="flex-1 p-6 overflow-y-auto font-mono text-sm space-y-4 rounded-0 bg-gray-900"
             onClick={() => inputRef.current?.focus()}
           >
             {history.map((entry, idx) => (
