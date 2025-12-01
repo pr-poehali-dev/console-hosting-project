@@ -3,6 +3,7 @@ import Icon from '@/components/ui/icon';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CommandHistory {
   command: string;
@@ -22,6 +23,7 @@ const Index = () => {
   const [history, setHistory] = useState<CommandHistory[]>([]);
   const [currentSection, setCurrentSection] = useState('home');
   const [stats, setStats] = useState<SystemStats>({ cpu: 45, ram: 62, disk: 78, network: 23 });
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,18 +38,23 @@ const Index = () => {
     { id: 'api', name: 'API', icon: 'Code2', color: 'text-[#00ffff]' },
   ];
 
+  const allCommands = [
+    'help', 'clear', 'status', 'section', 'ls', 'uptime', 'whoami', 'exit',
+    'cat', 'mkdir', 'rm', 'cd', 'pwd', 'ps', 'top', 'df', 'free', 'ping'
+  ];
+
   useEffect(() => {
     setHistory([
       {
         command: 'system',
         output: [
           '╔═══════════════════════════════════════════════════╗',
-          '║   HOSTING CONTROL TERMINAL v2.0.1               ║',
+          '║   HOSTING CONTROL TERMINAL v2.1.0               ║',
           '║   System online • All services operational       ║',
           '╚═══════════════════════════════════════════════════╝',
           '',
           'Type "help" for available commands',
-          'Type "section <name>" to navigate sections',
+          'Press TAB for autocomplete • Arrow Up/Down for history',
         ],
         timestamp: new Date().toLocaleTimeString(),
       },
@@ -71,6 +78,99 @@ const Index = () => {
     }
   }, [history]);
 
+  useEffect(() => {
+    if (input) {
+      const matches = allCommands.filter(cmd => cmd.startsWith(input.toLowerCase()));
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  }, [input]);
+
+  const getSectionContent = (sectionId: string) => {
+    switch (sectionId) {
+      case 'files':
+        return [
+          'Directory: /var/www/',
+          '  drwxr-xr-x  html/          2.4 GB',
+          '  drwxr-xr-x  logs/          156 MB',
+          '  drwxr-xr-x  backups/       8.2 GB',
+          '  -rw-r--r--  index.html     12 KB',
+          '',
+          'Total: 10.8 GB used of 50 GB available'
+        ];
+      case 'settings':
+        return [
+          'Server Configuration:',
+          '  PHP Version:       8.2.12',
+          '  MySQL Version:     8.0.35',
+          '  Nginx Version:     1.24.0',
+          '  SSL Certificate:   ✓ Valid (expires: 2025-12-31)',
+          '  Auto-backup:       ✓ Enabled (daily at 03:00)',
+        ];
+      case 'stats':
+        return [
+          'Traffic Statistics (Last 24h):',
+          '  Total Requests:    247,851',
+          '  Unique Visitors:   18,342',
+          '  Bandwidth Used:    45.2 GB',
+          '  Avg Response Time: 142ms',
+          '  Status 200:        98.4%',
+          '  Status 404:        1.2%',
+        ];
+      case 'domains':
+        return [
+          'Active Domains:',
+          '  ✓ example.com           SSL: Valid',
+          '  ✓ www.example.com       SSL: Valid',
+          '  ✓ api.example.com       SSL: Valid',
+          '  ⚠ staging.example.com   SSL: Expiring soon',
+          '',
+          'DNS Status: All records propagated'
+        ];
+      case 'databases':
+        return [
+          'MySQL Databases:',
+          '  production_db      Size: 2.4 GB   Tables: 47',
+          '  staging_db         Size: 856 MB   Tables: 42',
+          '  analytics_db       Size: 4.2 GB   Tables: 15',
+          '',
+          'Total: 3 databases, 7.5 GB used'
+        ];
+      case 'servers':
+        return [
+          'Server Status:',
+          '  web-01.prod        ✓ Online   Load: 2.45',
+          '  web-02.prod        ✓ Online   Load: 1.87',
+          '  db-01.prod         ✓ Online   Load: 3.12',
+          '  cache-01.prod      ✓ Online   Load: 0.54',
+          '',
+          'Cluster Health: Excellent'
+        ];
+      case 'logs':
+        return [
+          'Recent Log Entries:',
+          '  [12:34:56] INFO  Request processed in 45ms',
+          '  [12:34:55] INFO  Cache hit for /api/users',
+          '  [12:34:52] WARN  Slow query detected: 1.2s',
+          '  [12:34:48] INFO  SSL certificate renewed',
+          '  [12:34:45] ERROR Connection timeout to API',
+        ];
+      case 'api':
+        return [
+          'API Endpoints:',
+          '  GET    /api/v1/users          Rate: 1000/hour',
+          '  POST   /api/v1/auth           Rate: 100/hour',
+          '  GET    /api/v1/analytics      Rate: 500/hour',
+          '  PATCH  /api/v1/settings       Rate: 50/hour',
+          '',
+          'API Key: ••••••••••••4f2a (Last used: 2 min ago)'
+        ];
+      default:
+        return ['Navigate to a section to view details'];
+    }
+  };
+
   const executeCommand = (cmd: string) => {
     const trimmedCmd = cmd.trim().toLowerCase();
     let output: string[] = [];
@@ -81,11 +181,14 @@ const Index = () => {
         '  help           - Show this help message',
         '  clear          - Clear terminal',
         '  status         - Show system status',
-        '  section <name> - Navigate to section (files, settings, stats, etc)',
+        '  section <name> - Navigate to section',
         '  ls             - List current resources',
+        '  cat <section>  - Show section details',
         '  uptime         - Show system uptime',
         '  whoami         - Show current user',
-        '  exit           - Close terminal (unavailable)',
+        '  ps             - Show running processes',
+        '  df             - Show disk usage',
+        '  free           - Show memory usage',
       ];
     } else if (trimmedCmd === 'clear') {
       setHistory([]);
@@ -104,22 +207,45 @@ const Index = () => {
       const section = sections.find(s => s.id === sectionName);
       if (section) {
         setCurrentSection(sectionName);
-        output = [`Navigated to section: ${section.name}`];
+        output = [`Navigated to section: ${section.name}`, '', ...getSectionContent(sectionName)];
+      } else {
+        output = [`Error: Section '${sectionName}' not found`, 'Available: files, settings, stats, domains, databases, servers, logs, api'];
+      }
+    } else if (trimmedCmd.startsWith('cat ')) {
+      const sectionName = trimmedCmd.split(' ')[1];
+      const section = sections.find(s => s.id === sectionName);
+      if (section) {
+        output = getSectionContent(sectionName);
       } else {
         output = [`Error: Section '${sectionName}' not found`];
       }
     } else if (trimmedCmd === 'ls') {
-      output = [
-        'Current section resources:',
-        '  ./var/www/html',
-        '  ./etc/nginx/sites-enabled',
-        '  ./home/user/backups',
-        '  ./opt/applications',
-      ];
+      output = getSectionContent(currentSection);
     } else if (trimmedCmd === 'uptime') {
-      output = ['System uptime: 47 days, 12:34:56'];
+      output = ['System uptime: 47 days, 12:34:56', 'Load average: 2.15, 1.89, 1.76'];
     } else if (trimmedCmd === 'whoami') {
-      output = ['root@hosting-control'];
+      output = ['root@hosting-control', 'Permissions: Administrator'];
+    } else if (trimmedCmd === 'ps') {
+      output = [
+        'PID   USER     COMMAND              CPU%   MEM%',
+        '1234  nginx    nginx: master        2.3%   1.2%',
+        '1235  mysql    mysqld               5.4%   8.7%',
+        '1236  php-fpm  php-fpm: master      1.1%   3.4%',
+        '1237  redis    redis-server         0.8%   0.5%',
+      ];
+    } else if (trimmedCmd === 'df') {
+      output = [
+        'Filesystem      Size   Used  Avail  Use%',
+        '/dev/sda1        50G   35G    13G   78%',
+        '/dev/sda2       100G   12G    84G   13%',
+        'tmpfs            16G   1.2G   15G    8%',
+      ];
+    } else if (trimmedCmd === 'free') {
+      output = [
+        '              total       used       free     shared',
+        'Mem:          16384      10157       4892       234',
+        'Swap:          4096        512       3584',
+      ];
     } else if (trimmedCmd === '') {
       return;
     } else {
@@ -141,6 +267,17 @@ const Index = () => {
     if (input.trim()) {
       executeCommand(input);
       setInput('');
+      setSuggestions([]);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        setInput(suggestions[0]);
+        setSuggestions([]);
+      }
     }
   };
 
@@ -237,6 +374,24 @@ const Index = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="border-t border-[#00ff00] border-opacity-30 p-4">
+            {suggestions.length > 0 && (
+              <div className="mb-2 flex gap-2 flex-wrap">
+                {suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setInput(suggestion);
+                      setSuggestions([]);
+                      inputRef.current?.focus();
+                    }}
+                    className="px-2 py-1 text-xs bg-[#00ff00] bg-opacity-10 border border-[#00ff00] border-opacity-30 text-[#00ff00] hover:bg-opacity-20 transition-all"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span className="text-[#00ffff] text-glow-sm font-semibold">root@hosting</span>
               <span className="text-[#a855f7]">~</span>
@@ -246,6 +401,7 @@ const Index = () => {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="flex-1 bg-transparent border-none outline-none text-[#00ff00] font-mono caret-[#00ff00]"
                 placeholder="Type a command..."
                 autoFocus
